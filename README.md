@@ -163,6 +163,12 @@ The [MultiQC](https://multiqc.info/) tool will compile output logs from FastQC, 
 | `...`        | input directory   |
 
 ```
-multiqc --quiet --outdir 'data' --filename 'multiqc.html' --module fastqc --module star --module featureCounts 'data'
+multiqc --quiet \
+        --outdir 'data' \
+        --filename 'multiqc.html' \
+        --module fastqc \
+        --module star \
+        --module featureCounts \
+        'data'
 ```
 
