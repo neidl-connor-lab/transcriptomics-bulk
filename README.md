@@ -27,7 +27,55 @@ cd transcriptomics-bulk
 
 ### 2. Make alignment index
 
-Coming soon...
+Create the alignment index from a reference sequence FASTA file and annotation GTF file. For most model organisms, FASTA and GTF references can be found at [Ensembl](https://useast.ensembl.org/index.html). Run `./index.sh` with the `-h` flag to view the full list of options.
+
+> *An important note about `exon` vs `transcript`.* Use the `exon` feature when aligning a library prepared with polyA selection. If only rRNA depletion was used, use the `transcript` feature.
+
+| Flag | Argument                                  |
+| :--- | :---------------------------------------- |
+| `-P` | SCC project                               |
+| `-N` | job name                                  |
+| `-g` | genome annotation GTF file                |
+| `-f` | genome reference FASTA file               |
+| `-o` | output directory                          |
+| `-x` | alignment feature; `exon` or `transcript` |
+
+```
+usage: qsub -P PROJECT -N JOBNAME index.sh -g GTF -f FASTA -o OUTPUT -x FEATURE
+
+arguments (options):
+  -g genome GTF file
+  -f genome FASTA file
+  -o output directory
+  -x feature for alignments (transcript|exon)
+  -h show this message and exit
+```
+
+Here is an example, where we download the _Homo sapiens_ reference files from [Ensembl](https://useast.ensembl.org/Homo_sapiens/Info/Index) and use them to make an index for libraries prepped with polyA selection (`exon` not `transcript`).
+
+```
+# download the human reference
+wget http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_rm.toplevel.fa.gz
+wget http://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.gtf.gz
+
+# decompress the files
+gunzip Homo_sapiens.GRCh38.dna_rm.toplevel.fa.gz
+gunzip Homo_sapiens.GRCh38.107.gtf.gz
+
+# move them to the indices/ folder
+mkdir indices
+mv Homo_sapiens.GRCh38.107.gtf indices/
+mv Homo_sapiens.GRCh38.dna_rm.toplevel.fa indices/
+
+# submit the indexing job
+qsub -P test-project \
+     -N test-index \
+     index.sh \
+     -g indices/Homo_sapiens.GRCh38.107.gtf \
+     -f indices/Homo_sapiens.GRCh38.dna_rm.toplevel.fa \
+     -o indices/hsapiens/ \ 
+     -x exon
+```
 
 ### 3. Run pipeline
 
@@ -64,8 +112,9 @@ Here is an example, where the index materials are in `indices/`, FASTQ input fil
 ```
 qsub -P test-project \
      -N test-job pipeline.sh \
-     -i indices/test-index/ \
-     -g indices/test-index.gtf \
+     pipeline.sh \ 
+     -i indices/hsapiens/ \
+     -g indices/Homo_sapiens.GRCh38.107.gtf \
      -f input-files/ \
      -o output-files/
 ```
@@ -127,7 +176,7 @@ featureCounts -T 16 \
               -t FEATURE \
               -g gene_name \
               -O \
-              -a 'annotatiaon.gtf' \
+              -a 'annotation.gtf' \
               -o 'output/counts.tsv' \
               'output/sample01-Aligned.out.bam' ...
 ```

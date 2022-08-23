@@ -23,7 +23,7 @@ checkcmd () {
 # default values and help message
 HELP="usage: qsub -P PROJECT -N JOBNAME $(basename "$0") -i INDEX -g GTF -f FASTQ -o OUTPUT
 
-arguments (default):
+arguments:
   -i path to STAR index
   -g path to GTF annotation
   -f input FASTQ directory 
@@ -65,6 +65,28 @@ echo ""
 ## check inputs -------------------------------------------------
 mesg "STEP 0: CHECKING INPUTS"
 
+# index directory
+if [ -z "$INDEX" ]
+then
+  err "No index directory provided"
+elif [ -d "$INDEX" ]
+then
+  mesg "Valid index directory: $INDEX"
+else
+  mesg "Invalid index directory: $INDEX"
+fi
+
+# GTF file 
+if [ -z "$GTF" ]
+then
+  err "No GTF file provided"
+elif [ -f "$GTF" ]
+then
+  mesg "Valid GTF file: $GTF"
+else
+  err "GTF file not found: $GTF"
+fi
+
 # input directory
 if [ -z "$INDIR" ]
 then
@@ -88,22 +110,6 @@ else
   mkdir -p "$ODIR"
 fi
 
-# index directory
-if [ -d "$INDEX" ]
-then
-  mesg "Valid index directory: $INDEX"
-else
-  err "Index directory not found: $INDEX"
-fi
-
-# GTF file 
-if [ -f "$GTF" ]
-then
-  mesg "Valid GTF file: $GTF"
-else
-  err "GTF file not found: $GTF"
-fi
-
 # get sample IDs
 mesg "Extracting sample IDs:"
 IDS=""
@@ -117,6 +123,9 @@ if [ -z "$IDS" ]
 then
   err "No sample IDs found in input directory"
 fi
+
+# done checking inputs!
+mesg "Done checking inputs!"
 echo ""
 
 ## STAR alignment loop ------------------------------------------
