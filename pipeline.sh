@@ -1,23 +1,11 @@
 #!/bin/bash -l
 
 # qsub options
-#$ -P lasvchal
 #$ -l h_rt=48:00:00
 #$ -l mem_per_core=12G
 #$ -pe omp 16
 #$ -j y
 #$ -o log-$JOB_NAME.qlog
-
-# job info
-echo "=========================================================="
-echo "Start date: $(date)"
-echo "Running on node: $(hostname)"
-echo "Current directory: $(pwd)"
-echo "Job name: $JOB_NAME"
-echo "Job ID: $JOB_ID"
-echo "Task ID: $SGE_TASK_ID"
-echo "=========================================================="
-echo ""
 
 ## setup --------------------------------------------------------
 # functions
@@ -33,17 +21,13 @@ checkcmd () {
 }
 
 # default values and help message
-INDEX="star-hsapiens-kikwit-transcript"
-GTF="genome/hsapiens-kikwit.gtf"
-HELP="usage: qsub -N JOBNAME $(basename "$0") [OPTIONS] INDIR ODIR 
+HELP="usage: qsub -P PROJECT -N JOBNAME $(basename "$0") -i INDEX -g GTF -f FASTQ -o OUTPUT
 
-positional arguments:
-  INDIR input directory with FASTQ files (*-r1/2.fq.gz)
-  ODIR  output directory
-
-options (default):
-  -i path to STAR index ($INDEX)
-  -g path to GTF annotation ($GTF)
+arguments (default):
+  -i path to STAR index
+  -g path to GTF annotation
+  -f input FASTQ directory 
+  -o output directory
   -h show this message and exit
 "
 
@@ -55,6 +39,10 @@ do
       ;;
     g ) GTF="${OPTARG}"
       ;;
+    f ) INDIR="${OPTARG}"
+      ;;
+    o ) ODIR="${OPTARG}"
+      ;;
     h ) echo "${HELP}" && exit 0
       ;;
     \? ) err "Invalid option ${opt}\n${HELP}"
@@ -63,9 +51,16 @@ do
 done
 shift $((OPTIND -1))
 
-# set input and output paths
-INDIR="$1"
-ODIR="$2"
+## print job info for output log --------------------------------
+echo "=========================================================="
+echo "Start date: $(date)"
+echo "Running on node: $(hostname)"
+echo "Current directory: $(pwd)"
+echo "Job name: $JOB_NAME"
+echo "Job ID: $JOB_ID"
+echo "Task ID: $SGE_TASK_ID"
+echo "=========================================================="
+echo ""
 
 ## check inputs -------------------------------------------------
 mesg "STEP 0: CHECKING INPUTS"
