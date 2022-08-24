@@ -29,7 +29,7 @@ cd transcriptomics-bulk
 
 Create the alignment index from a reference sequence FASTA file and annotation GTF file. For most model organisms, FASTA and GTF references can be found at [Ensembl](https://useast.ensembl.org/index.html). Run `./index.sh` with the `-h` flag to view the full list of options.
 
-> *An important note about `exon` vs `transcript`.* Use the `exon` feature when aligning a library prepared with polyA selection. If only rRNA depletion was used, use the `transcript` feature.
+> _An important note about `exon` vs `transcript`._ Use the `exon` feature when aligning a library prepared with polyA selection. If only rRNA depletion was used, use the `transcript` feature.
 
 | Flag | Argument                                  |
 | :--- | :---------------------------------------- |
@@ -55,7 +55,7 @@ Here is an example, where we download the _Homo sapiens_ reference files from [E
 
 ```
 # download the human reference
-wget http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna_rm.toplevel.fa.gz
+wget http://ftp.ensembl.org/pub/release-107/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz
 wget http://ftp.ensembl.org/pub/release-107/gtf/homo_sapiens/Homo_sapiens.GRCh38.107.gtf.gz
 
 # decompress the files
@@ -73,7 +73,7 @@ qsub -P test-project \
      index.sh \
      -g indices/Homo_sapiens.GRCh38.107.gtf \
      -f indices/Homo_sapiens.GRCh38.dna_rm.toplevel.fa \
-     -o indices/hsapiens/ \ 
+     -o indices/hsapiens \ 
      -x exon
 ```
 
@@ -87,23 +87,27 @@ View pipeline options and required arguments by running `pipeline.sh` with the `
 
 The help message indicates the required arguments and how to pass them:
 
-| Flag | Argument                        |
-| :--- | :------------------------------ |
-| `-P` | SCC project                     |
-| `-N` | job name                        |
-| `-i` | path to index created in step 2 |
-| `-g` | path to GTF file used in step 2 |
-| `-f` | directory with FASTQ files      |
-| `-o` | output directory                |
+| Flag | Argument                                  |
+| :--- | :---------------------------------------- |
+| `-P` | SCC project                               |
+| `-N` | job name                                  |
+| `-i` | path to index created in step 2           |
+| `-g` | path to GTF file used in step 2           |
+| `-f` | directory with FASTQ files                |
+| `-o` | output directory                          |
+| `-x` | alignment feature; `exon` or `transcript` |
+| `-m` | feature label; `gene_id` or `gene_name`   |
 
 ```
-usage: qsub -P PROJECT -N JOBNAME pipeline.sh -i INDEX -g GTF -f FASTQ -o OUTPUT
+usage: qsub -P PROJECT -N JOBNAME pipeline.sh -i INDEX -g GTF -f FASTQ -o OUTPUT -x FEATURE -m LABEL
 
-arguments (default):
+arguments (options):
   -i path to STAR index
   -g path to GTF annotation
   -f input FASTQ directory 
   -o output directory
+  -x feature for alignments (transcript | exon)
+  -m label for count matrix (gene_id | gene_name)
   -h show this message and exit
 ```
 
@@ -111,7 +115,7 @@ Here is an example, where the index materials are in `indices/`, FASTQ input fil
 
 ```
 qsub -P test-project \
-     -N test-job pipeline.sh \
+     -N test-job \
      pipeline.sh \ 
      -i indices/hsapiens/ \
      -g indices/Homo_sapiens.GRCh38.107.gtf \
@@ -174,7 +178,7 @@ featureCounts -T 16 \
               -M \
               -p \
               -t FEATURE \
-              -g gene_name \
+              -g LABEL \
               -O \
               -a 'annotation.gtf' \
               -o 'output/counts.tsv' \

@@ -21,18 +21,20 @@ checkcmd () {
 }
 
 # default values and help message
-HELP="usage: qsub -P PROJECT -N JOBNAME $(basename "$0") -i INDEX -g GTF -f FASTQ -o OUTPUT
+HELP="usage: qsub -P PROJECT -N JOBNAME $(basename "$0") -i INDEX -g GTF -f FASTQ -o OUTPUT -x FEATURE -m LABEL
 
-arguments:
+arguments (options):
   -i path to STAR index
   -g path to GTF annotation
   -f input FASTQ directory 
   -o output directory
+  -x feature for alignments (transcript | exon)
+  -m label for count matrix (gene_id | gene_name)
   -h show this message and exit
 "
 
 # parsing arguments
-while getopts ":hi:g:" opt 
+while getopts ":hi:g:f:o:x:m:" opt 
 do 
   case ${opt} in 
     i ) INDEX="${OPTARG}"
@@ -42,6 +44,10 @@ do
     f ) INDIR="${OPTARG}"
       ;;
     o ) ODIR="${OPTARG}"
+      ;;
+    x ) FEAT="${OPTARG}"
+      ;;
+    m ) META="${OPTARG}"
       ;;
     h ) echo "${HELP}" && exit 0
       ;;
@@ -58,7 +64,6 @@ echo "Running on node: $(hostname)"
 echo "Current directory: $(pwd)"
 echo "Job name: $JOB_NAME"
 echo "Job ID: $JOB_ID"
-echo "Task ID: $SGE_TASK_ID"
 echo "=========================================================="
 echo ""
 
@@ -110,6 +115,34 @@ else
   mkdir -p "$ODIR"
 fi
 
+# alignment feature
+if [ -z "$FEAT" ]
+then
+  err "No index feature provided"
+elif [ "$FEAT" = "transcript" ]
+then
+  mesg "Valid index feature: $FEAT"
+elif [ "$FEAT" = "exon" ]
+then
+  mesg "Valid index feature: $FEAT"
+else
+  err "Invalid index feature: $FEAT"
+fi
+
+# label/meta-feature keyword
+if [ -z "$META" ]
+then
+  err "No label provided"
+elif [ "$META" = "gene_id" ]
+then
+  mesg "Valid index feature: $META"
+elif [ "$META" = "gene_name" ]
+then
+  mesg "Valid index feature: $META"
+else
+  err "Invalid index feature: $META"
+fi
+
 # get sample IDs
 mesg "Extracting sample IDs:"
 IDS=""
@@ -142,6 +175,7 @@ mesg "Beginning alignment loop through $(echo $IDS | wc -w) samples..."
 echo ""
 for i in $IDS
 do
+  # set up and run alignment
   mesg "Aligning sample: $i"
   R1="${INDIR}/${i}-r1.fq.gz"
   R2="${INDIR}/${i}-r2.fq.gz"
@@ -151,6 +185,12 @@ do
   eval "$CMD"
   checkcmd "Alignment for $i"
   echo ""
+
+  # remove intermediate STAR files 
+  rm ${PRE}Log.out
+  rm ${PRE}Log.progress.out
+  rm ${PRE}SJ.out.tab
+  rm -r ${PRE}_STARtmp/
 done
 
 mesg "Exiting alignment loop."
@@ -171,7 +211,7 @@ done
 
 # set up command
 mesg "Writing counts to ${ODIR}/counts.tsv"
-CMD="featureCounts -T 16 -O -M -p -t exon -g gene_name -a '$GTF' -o '${ODIR}/counts.tsv' $BAMS"
+CMD="featureCounts -T 16 -O -M -p -t $FEAT -g $META -a '$GTF' -o '${ODIR}/counts.tsv' $BAMS"
 mesg "CMD: $CMD"
 eval "$CMD"
 checkcmd "featureCounts"
