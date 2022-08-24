@@ -1,5 +1,5 @@
-# rnaseq-bulk
-Jackie's bulk RNA-seq workflow
+# Bulk RNA-seq processing pipeline
+v1.0 by Jackie T.
 
 ## Requirements
 
